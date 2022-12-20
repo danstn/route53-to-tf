@@ -58,14 +58,18 @@ func main() {
 
 	// render records
 	for _, rr := range output.RecordSets {
+		isAlias := len(rr.ResourceRecords) == 0
+
 		cleanDomain := removeTrailingDot(rr.Name)
-		recordRef := dashify(cleanDomain)
+		recordRef := fmt.Sprintf("%s-%s", dashify(cleanDomain), strings.ToLower(rr.Type))
 		fmt.Printf("resource \"aws_route53_record\" \"record-%s\" {\n", recordRef)
-		fmt.Printf("  name = \"%s\"\n", cleanDomain)
-		fmt.Printf("  type = \"%s\"\n", rr.Type)
-		fmt.Printf("  ttl  = %d\n", rr.TTL)
+		fmt.Printf("  name    = \"%s\"\n", cleanDomain)
+		fmt.Printf("  type    = \"%s\"\n", rr.Type)
+		if !isAlias {
+			fmt.Printf("  ttl     = %d\n", rr.TTL)
+		}
 		fmt.Printf("  zone_id = local.%s\n", KeyZoneID)
-		if len(rr.ResourceRecords) == 0 {
+		if isAlias {
 			// Handle alias resource record sets
 			fmt.Printf("  alias {\n")
 			fmt.Printf("    name                   = \"%s\"\n", rr.AliasTarget.DNSName)
