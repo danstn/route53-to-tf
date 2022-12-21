@@ -26,7 +26,7 @@ type ListResourceRecordSetsOutput struct {
 	RecordSets []RecordSet `json:"ResourceRecordSets"`
 }
 
-const KeyZoneID = "zoneID"
+const KeyZoneID = "zone_id"
 
 func main() {
 	if len(os.Args) != 2 {
