@@ -26,15 +26,18 @@ type ListResourceRecordSetsOutput struct {
 	RecordSets []RecordSet `json:"ResourceRecordSets"`
 }
 
+var showImports = true
+
 const KeyZoneID = "zone_id"
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("Usage: go run main.go DOMAIN")
+	if len(os.Args) != 3 {
+		fmt.Println("Usage: go run main.go ZONE_ID DOMAIN")
 		os.Exit(1)
 	}
 
-	domain := os.Args[1]
+	zoneId := os.Args[1]
+	domain := os.Args[2]
 
 	// read from stdio
 	input, err := ioutil.ReadAll(os.Stdin)
@@ -52,9 +55,15 @@ func main() {
 	}
 
 	// render locals
-	fmt.Print("locals {\n")
-	fmt.Printf("  %s = \"%s\"\n", KeyZoneID, domain)
+	zoneRef := dashify(domain)
+	fmt.Printf("resource aws_route53_zone %s {\n", zoneRef)
+	fmt.Printf("  name = \"%s\"\n", domain)
 	fmt.Print("}\n\n")
+
+	zoneImport := fmt.Sprintf("terraform import aws_route53_zone.%s %s", dashify(domain), zoneId)
+	imports := []string{
+		zoneImport,
+	}
 
 	// render records
 	for _, rr := range output.RecordSets {
@@ -68,7 +77,7 @@ func main() {
 		if !isAlias {
 			fmt.Printf("  ttl     = %d\n", rr.TTL)
 		}
-		fmt.Printf("  zone_id = local.%s\n", KeyZoneID)
+		fmt.Printf("  zone_id = aws_route53_zone.%s.zone_id\n", zoneRef)
 		if isAlias {
 			// Handle alias resource record sets
 			fmt.Printf("  alias {\n")
@@ -90,6 +99,20 @@ func main() {
 		fmt.Println()
 
 		fmt.Print("}\n\n")
+
+		r := fmt.Sprintf("terraform import aws_route53_record.record-%s-%s %s_%s_%s",
+			dashify(cleanDomain),
+			strings.ToLower(rr.Type),
+			zoneId,
+			dashify(cleanDomain),
+			rr.Type)
+		imports = append(imports, r)
+	}
+
+	if showImports {
+		for _, r := range imports {
+			fmt.Println(r)
+		}
 	}
 }
 
