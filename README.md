@@ -6,5 +6,5 @@ Convert the result of `aws route53 list-resource-record-sets` to Terraform recor
 
 ```bash
 aws route53 list-resource-record-sets --hosted-zone-id <ZONE_ID> > records.json
-cat records.json | go run main.go <DOMAIN>
+cat records.json | go run main.go <ZONE_ID> <DOMAIN>
 ```
