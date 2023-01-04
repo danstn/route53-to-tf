@@ -104,7 +104,7 @@ func main() {
 			dashify(cleanDomain),
 			strings.ToLower(rr.Type),
 			zoneId,
-			dashify(cleanDomain),
+			cleanDomain,
 			rr.Type)
 		imports = append(imports, r)
 	}
